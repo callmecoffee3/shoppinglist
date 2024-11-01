@@ -1,0 +1,621 @@
+<html><head><base href="." /><title>Shopping List Variables</title><style>
+body { 
+    font-family: Arial; 
+    padding: 20px; 
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    background-attachment: fixed;
+    transition: background 0.3s ease;
+}
+.container { 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    display: flex; 
+    flex-wrap: wrap; 
+}
+.list { 
+    margin: 20px; 
+    padding: 15px; 
+    border: none;
+    border-radius: 10px; 
+    flex: 1; 
+    min-width: 300px;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+}
+.list::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #00C9FF 0%, #92FE9D 100%);
+}
+button { 
+    margin: 5px; 
+    padding: 8px 16px; 
+    background: linear-gradient(45deg, #00C9FF, #92FE9D);
+    color: white; 
+    border: none; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+button:hover { 
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.item { 
+    padding: 10px; 
+    margin: 4px 0; 
+    background-color: #f9f9f9; 
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+.item:hover { 
+    background-color: #e9e9e9;
+    transform: scale(1.01);
+}
+.item-extension { 
+    display: none; 
+    padding: 10px 20px; 
+    background-color: #f0f0f0;
+    border-radius: 0 0 6px 6px;
+    animation: slideDown 0.3s ease;
+}
+@keyframes slideDown {
+    from { transform: translateY(-10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+.item.selected { 
+    background: linear-gradient(45deg, #e0ffe0, #f0fff0);
+}
+.extension-btn { 
+    margin: 2px; 
+    padding: 4px 8px; 
+    font-size: 0.8em;
+    background: linear-gradient(45deg, #92FE9D, #00C9FF);
+}
+.ai-suggestion { 
+    background-color: #e6f3ff; 
+    padding: 10px; 
+    margin-top: 10px; 
+    border-radius: 4px;
+    border-left: 4px solid #00C9FF;
+}
+.datetime {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.theme-picker {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 100;
+    transition: z-index 0.3s;
+}
+.theme-picker.front {
+    z-index: 2000;
+}
+.fullscreen-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+.edit-panel {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999;
+}
+h2 {
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+}
+.color-editor {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 1000;
+    display: none;
+}
+.store-categories {
+    margin: 20px;
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    flex: 1;
+    min-width: 300px;
+    background: white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.category-item {
+    padding: 10px;
+    margin: 5px 0;
+    background: #f5f5f5;
+    border-radius: 4px;
+    cursor: move;
+    user-select: none;
+}
+.category-item.dragging {
+    opacity: 0.5;
+}
+@media print {
+    .options { display: none; }
+    .item-extension { display: none; }
+    .container { display: block; }
+    .list { break-inside: avoid; }
+    .datetime, .theme-picker, .fullscreen-btn, .edit-panel { display: none; }
+}
+</style></head><body>
+
+<div class="datetime" id="datetime"></div>
+<div class="theme-picker">
+    <button onclick="toggleThemePanel()">Change Theme</button>
+    <button onclick="toggleMute()" id="muteBtn">Mute Sound</button>
+    <button onclick="toggleThemePosition()">Toggle Theme Panel</button>
+    <input type="color" id="themeColor" onchange="updateTheme()" style="display:none">
+    <input type="file" id="bgImage" accept="image/*" onchange="updateBackground()" style="display:none">
+    <input type="file" id="bgSound" accept="audio/*" onchange="updateSound()" style="display:none">
+</div>
+<button class="fullscreen-btn" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+
+<div class="overlay" id="overlay"></div>
+<div class="edit-panel" id="editPanel">
+    <h3>Edit Items</h3>
+    <textarea id="editArea" rows="10" cols="50"></textarea>
+    <button onclick="saveEdits()">Save</button>
+    <button onclick="closeEditPanel()">Cancel</button>
+</div>
+
+<div class="color-editor" id="colorEditor">
+    <h3>Edit Colors</h3>
+    <div>
+        <label>Background Start:</label>
+        <input type="color" id="bgColorStart" onchange="updateCustomColors()">
+    </div>
+    <div>
+        <label>Background End:</label>
+        <input type="color" id="bgColorEnd" onchange="updateCustomColors()">
+    </div>
+    <div>
+        <label>Button Gradient Start:</label>
+        <input type="color" id="btnColorStart" onchange="updateCustomColors()">
+    </div>
+    <div>
+        <label>Button Gradient End:</label>
+        <input type="color" id="btnColorEnd" onchange="updateCustomColors()">
+    </div>
+    <button onclick="closeColorEditor()">Close</button>
+</div>
+
+<div class="container">
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+<script>
+const storeItems = [
+    "Eggs 18", "Bacon", "Snacks", "Syrup", "Sweetener", "Hoagies", 
+    "Milk 2%", "Jello", "Meat", "Meals", "Big Hot dog", "Steak",
+    "Cheese sticks", "Mountain dew", "Sliced cheese", "Pizza", "Popcorn",
+    "Pepperoni", "Cheddar cheese", "Cups", "Water", "Mints", "Instant coffee",
+    "Antiperspirant", "towels", "napkins", "tableware", "AA", "AAA", "C", "D", "F",
+    "charging cords", "Bottle Water", "Jar Sauce", "Canned Beans", 
+    "Fresh Vegetables", "Fresh Fruits", "Bread", "Cereals", "Ice Cream",
+    "Yogurt", "Butter", "Coffee", "Tea", "Sugar", "Salt", "Pepper",
+    "Cooking Oil", "Rice", "Pasta", "Flour", "Spices", "Condiments",
+    "Paper Towels", "Toilet Paper", "Dish Soap", "Laundry Detergent",
+    "Trash Bags", "Aluminum Foil", "Plastic Wrap", "Storage Containers"
+];
+
+const extensions = [
+    "single", "multiple", "plastic", "paper", "canned", 
+    "bottle", "jar", "small", "medium", "large", "x-large"
+];
+
+const storeCategories = [
+    "Dairy", "Meat", "Produce", "Beverages", "Snacks",
+    "Canned Goods", "Baking", "Household", "Personal Care",
+    "Frozen Foods", "Condiments", "Paper Products", "Pet Supplies",
+    "Baby Items", "International Foods"
+];
+
+const myShoppingList = new Array(40).fill("");
+
+let model;
+let userChoices = [];
+
+async function createModel() {
+    model = tf.sequential({
+        layers: [
+            tf.layers.dense({units: 16, inputShape: [33], activation: 'relu'}),
+            tf.layers.dense({units: 9, activation: 'sigmoid'})
+        ]
+    });
+    
+    model.compile({
+        optimizer: tf.train.adam(0.001),
+        loss: 'binaryCrossentropy',
+        metrics: ['accuracy'],
+    });
+}
+
+async function trainModel() {
+    if (userChoices.length < 5) return; // Need minimum data
+
+    const itemChoices = new Array(storeItems.length).fill(0);
+    userChoices.forEach(choice => {
+        const itemIndex = storeItems.indexOf(choice.split(' - ')[0]);
+        if (itemIndex !== -1) itemChoices[itemIndex] = 1;
+    });
+
+    const xs = tf.tensor2d([itemChoices]);
+    const ys = tf.tensor2d([extensions.map(ext => 
+        userChoices.some(choice => choice.includes(ext)) ? 1 : 0
+    )]);
+
+    await model.fit(xs, ys, {epochs: 10});
+}
+
+async function suggestExtensions(itemIndex) {
+    if (!model || userChoices.length < 5) return extensions;
+
+    const input = new Array(storeItems.length).fill(0);
+    input[itemIndex] = 1;
+    
+    const prediction = await model.predict(tf.tensor2d([input])).data();
+    
+    return extensions.filter((_, i) => prediction[i] > 0.5);
+}
+
+function displayItems() {
+    const storeItemsDiv = document.getElementById('storeItems');
+    storeItemsDiv.innerHTML = storeItems.map((item, index) => `
+        <div class="item" onclick="toggleExtensions(${index})">
+            ${index + 1}. ${item}
+            <div class="item-extension" id="extensions-${index}">
+                ${extensions.map(ext => 
+                    `<button class="extension-btn" onclick="event.stopPropagation(); addToList('${item} - ${ext}')">${ext}</button>`
+                ).join('')}
+                <div class="ai-suggestion" id="ai-suggestion-${index}"></div>
+            </div>
+        </div>
+    `).join('');
+
+    const myListDiv = document.getElementById('myList');
+    myListDiv.innerHTML = myShoppingList.map((item, index) => 
+        `<div class="item">${index + 1}. ${item || 'Empty'}</div>`
+    ).join('');
+}
+
+function displayCategories() {
+    const categoriesDiv = document.getElementById('storeCategories');
+    categoriesDiv.innerHTML = storeCategories.map((category, index) => `
+        <div class="category-item" draggable="true" data-index="${index}">
+            ${index + 1}. ${category}
+        </div>
+    `).join('');
+    
+    const items = categoriesDiv.getElementsByClassName('category-item');
+    Array.from(items).forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+    });
+}
+
+function handleDragStart(e) {
+    e.target.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', e.target.dataset.index);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+    const toIndex = parseInt(e.target.dataset.index);
+    
+    const temp = storeCategories[fromIndex];
+    storeCategories[fromIndex] = storeCategories[toIndex];
+    storeCategories[toIndex] = temp;
+    
+    displayCategories();
+    document.querySelector('.dragging')?.classList.remove('dragging');
+}
+
+function addToList(item) {
+    const emptyIndex = myShoppingList.findIndex(slot => !slot);
+    if(emptyIndex !== -1) {
+        myShoppingList[emptyIndex] = item;
+        userChoices.push(item);
+        trainModel();
+        displayItems();
+    } else {
+        alert("Shopping list is full! Please remove some items first.");
+    }
+}
+
+function loadData() {
+    const savedList = localStorage.getItem('myShoppingList');
+    const savedChoices = localStorage.getItem('userChoices');
+    if (savedList) {
+        myShoppingList.splice(0, myShoppingList.length, ...JSON.parse(savedList));
+        if (savedChoices) {
+            userChoices = JSON.parse(savedChoices);
+        }
+        displayItems();
+    }
+}
+
+function saveData() {
+    localStorage.setItem('myShoppingList', JSON.stringify(myShoppingList));
+    localStorage.setItem('userChoices', JSON.stringify(userChoices));
+    alert("Shopping list saved!");
+}
+
+function viewList() {
+    console.log("Store Items:");
+    storeItems.forEach((item, index) => {
+        console.log(`${index + 1}. ${item}`);
+    });
+    displayItems();
+}
+
+function editItem() {
+    const itemIndex = prompt("Enter item index to edit:") - 1;
+    const newValue = prompt("Enter new value:");
+    if (itemIndex !== null && newValue !== null) {
+        myShoppingList[itemIndex] = newValue;
+        displayItems();
+    }
+}
+
+function deleteItem() {
+    const index = prompt("Enter shopping list index to delete:") - 1;
+    if (index !== null && index >= 0 && index < 40) {
+        myShoppingList[index] = "";
+        displayItems();
+    }
+}
+
+function exitProgram() {
+    if(confirm("Are you sure you want to exit?")) {
+        window.close();
+    }
+}
+
+function viewMyList() {
+    console.log("My Shopping List:");
+    myShoppingList.forEach((item, index) => {
+        console.log(`${index + 1}. ${item || 'Empty'}`);
+    });
+    displayItems();
+}
+
+function printList() {
+    window.print();
+}
+
+function expandList() {
+    const newSize = parseInt(prompt("Enter new list size (current: " + myShoppingList.length + "):"));
+    if (newSize && newSize > myShoppingList.length) {
+        myShoppingList.length = newSize;
+        myShoppingList.fill("", myShoppingList.length - (newSize - myShoppingList.length));
+        displayItems();
+    }
+}
+
+function updateDateTime() {
+    const now = new Date();
+    document.getElementById('datetime').innerHTML = now.toLocaleString();
+}
+
+setInterval(updateDateTime, 1000);
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function toggleThemePanel() {
+    const themeColor = document.getElementById('themeColor');
+    const bgImage = document.getElementById('bgImage');
+    const bgSound = document.getElementById('bgSound');
+    themeColor.style.display = themeColor.style.display === 'none' ? 'block' : 'none';
+    bgImage.style.display = bgImage.style.display === 'none' ? 'block' : 'none';
+    bgSound.style.display = bgSound.style.display === 'none' ? 'block' : 'none';
+}
+
+function updateTheme() {
+    const color = document.getElementById('themeColor').value;
+    document.body.style.background = `linear-gradient(135deg, ${color}22, ${color}88)`;
+}
+
+function updateBackground() {
+    const file = document.getElementById('bgImage').files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.body.style.backgroundImage = `url(${e.target.result})`;
+            document.body.style.backgroundSize = 'cover';
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function updateSound() {
+    const file = document.getElementById('bgSound').files[0];
+    const audio = document.getElementById('bgAudio');
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            audio.src = e.target.result;
+            audio.play();
+        }
+        reader.readAsDataURL(file);
+    }
+}
+
+function toggleMute() {
+    const audio = document.getElementById('bgAudio');
+    const muteBtn = document.getElementById('muteBtn');
+    if (audio.muted) {
+        audio.muted = false;
+        muteBtn.textContent = 'Mute Sound';
+    } else {
+        audio.muted = true;
+        muteBtn.textContent = 'Unmute Sound';
+    }
+}
+
+function editStoreItems() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('editPanel').style.display = 'block';
+    document.getElementById('editArea').value = storeItems.join('\n');
+}
+
+function editExtensions() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('editPanel').style.display = 'block';
+    document.getElementById('editArea').value = extensions.join('\n');
+}
+
+function editCategories() {
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('editPanel').style.display = 'block';
+    document.getElementById('editArea').value = storeCategories.join('\n');
+}
+
+function saveEdits() {
+    const newItems = document.getElementById('editArea').value.split('\n').filter(item => item.trim());
+    if (document.getElementById('editArea').value === extensions.join('\n')) {
+        extensions.length = 0;
+        extensions.push(...newItems);
+    } else if (document.getElementById('editArea').value === storeCategories.join('\n')) {
+        storeCategories.length = 0;
+        storeCategories.push(...newItems);
+    } else {
+        storeItems.length = 0;
+        storeItems.push(...newItems);
+    }
+    closeEditPanel();
+    displayItems();
+    displayCategories();
+}
+
+function closeEditPanel() {
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('editPanel').style.display = 'none';
+}
+
+function editColors() {
+    document.getElementById('colorEditor').style.display = 'block';
+    document.getElementById('overlay').style.display = 'block';
+}
+
+function closeColorEditor() {
+    document.getElementById('colorEditor').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+}
+
+function updateCustomColors() {
+    const bgStart = document.getElementById('bgColorStart').value;
+    const bgEnd = document.getElementById('bgColorEnd').value;
+    const btnStart = document.getElementById('btnColorStart').value;
+    const btnEnd = document.getElementById('btnColorEnd').value;
+    
+    document.body.style.background = `linear-gradient(135deg, ${bgStart}, ${bgEnd})`;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        button { background: linear-gradient(45deg, ${btnStart}, ${btnEnd}); }
+        .extension-btn { background: linear-gradient(45deg, ${btnStart}, ${btnEnd}); }
+    `;
+    document.head.appendChild(style);
+}
+
+// Initialize
+createModel().then(() => {
+    displayItems();
+    displayCategories();
+    loadData();
+    updateDateTime();
+});
+</script>
+
+<div class="list">
+    <h2>Store Items (Click item to see options)</h2>
+    <div id="storeItems"></div>
+</div>
+
+<div class="list">
+    <h2>My Shopping List</h2>
+    <div id="myList"></div>
+</div>
+
+<div class="store-categories">
+    <h2>Store Categories (Drag to Reorder)</h2>
+    <div id="storeCategories"></div>
+    <button onclick="editCategories()">Edit Categories</button>
+</div>
+
+<div class="list">
+    <h2>Options</h2>
+    <div id="options">
+        <button onclick="viewList()">View (c8)</button>
+        <button onclick="editItem()">Edit (c9)</button>
+        <button onclick="deleteItem()">Delete (c11)</button>
+        <button onclick="loadData()">Load (c12)</button>
+        <button onclick="saveData()">Save (c13)</button>
+        <button onclick="exitProgram()">Exit (c14)</button>
+        <button onclick="viewMyList()">My Shopping List (c15)</button>
+        <button onclick="printList()">Print List</button>
+        <button onclick="expandList()">Expand List</button>
+        <button onclick="editStoreItems()">Edit Store Items</button>
+        <button onclick="editExtensions()">Edit Extensions</button>
+        <button onclick="editColors()">Edit Colors</button>
+    </div>
+</div>
+
+<audio id="bgAudio" loop></audio>
+
+</div></body></html>
